@@ -35,7 +35,7 @@ class DensityProfileFit(object):
         if parser.parse_args().outfilename:
             self.ofilename = parser.parse_args().outfilename
         else:
-            self.ofilename = 'activity_coefficient.dat'
+            self.ofilename = 'density_profile_fit.dat'
 
         if parser.parse_args().z_collumn >= 0:
             """distance collumn"""

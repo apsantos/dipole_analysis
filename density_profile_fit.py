@@ -77,7 +77,8 @@ class DensityProfileFit(object):
         self.z = []
         self.rho = []
 
-        i_line = 0 
+        i_line = 0
+        shift = 0
         for line in ifile:
             i_line += 1
             if (i_line < self.start_line):
@@ -87,8 +88,13 @@ class DensityProfileFit(object):
             if len(data) <= self.ic_rho:
                 raise IOError('Not enough collumns in %s based on input information.' % filename)
 
+            if shift == 0:
+                if float( data[self.ic_z] ) < 0:
+                    # the positions need to be from 0 to L_z
+                    shift = self.half_L_z
             self.z.append( float( data[self.ic_z] ) * self.z_conversion)
             self.rho.append( float( data[self.ic_rho] ) * self.density_conversion)
+        self.z = [x+shift for x in self.z]
 
         ifile.close()
 
@@ -105,7 +111,6 @@ class DensityProfileFit(object):
 
         if (self.fit_style == 'IGS'):
             popt, pcov = curve_fit(self.IGS_fit, np.array(self.z), np.array(self.rho) )
-        print popt
         self.rho_vap = popt[0]
         self.rho_liq = popt[1]
         self.w = popt[2]

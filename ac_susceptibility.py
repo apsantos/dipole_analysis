@@ -79,6 +79,30 @@ class ACSusceptibility(object):
 
         ifile.close()
 
+    def guess_frequency(self, t, b):
+        magguess = np.max(b)
+        mean = np.mean(b)
+        fguess = 1
+        i_1 = 0
+        over_hump = False
+        for i in range( 15, len(t)):
+            # have we past the region near 0?
+            if i_1 != 0:
+                if (b[i] - mean)/magguess >= 0.01:
+                    over_hump = True
+
+            # is B near zero?
+            if (b[i] - mean)/magguess < 0.01:
+                # If this is the 1st time, keep track
+                if i_1 == 0:
+                    i_1 = i
+                # If it is the second time, we have the separation from 0
+                elif over_hump:
+                    # the frequency
+                    fguess = 3.0 / (t[i] - t[i_1])
+                    break
+        return magguess, fguess
+
     def sine_fit_fixfrequency(self, t, mag, shift):
         return mag * np.sin( self.omega * (t - shift) )
 
@@ -94,30 +118,7 @@ class ACSusceptibility(object):
         self.m = np.array(self.m)
 
         # get guess for magnitude and frequency
-        magguess = np.max(self.b)
-        mean = np.mean(self.b)
-        fguess = 1
-        i_1 = 0
-        over_hump = False
-        for i in range( 15, len(self.t)):
-            # have we past the region near 0?
-            if i_1 != 0:
-                if (self.b[i] - mean)/magguess >= 0.01:
-                    over_hump = True
-
-            # is B near zero?
-            if (self.b[i] - mean)/magguess < 0.01:
-                # If this is the 1st time, keep track
-                if i_1 == 0:
-                    print 'hi', self.b[i]
-                    i_1 = i
-                # If it is the second time, we have the separation from 0
-                elif over_hump:
-                    print 'ho', (self.t[i] - self.t[i_1]), self.b[i]
-                    # the frequency
-                    fguess = 3.0 / (self.t[i] - self.t[i_1])
-                    break
-        print fguess
+        magguess, fguess = self.guess_frequency(self.t, self.b)
         shiftguess = 0
         Bopt, Bcov = curve_fit(self.sine_fit, self.t, self.b, p0 = [ magguess, fguess, shiftguess] )
         self.b0 = Bopt[0]

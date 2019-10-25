@@ -46,6 +46,10 @@ class DipoleOrientation(object):
 
         if parser.parse_args().field_collumn >= 0:
             self.ic_dfield = parser.parse_args().field_collumn
+            self.dfield = 0
+        elif parser.parse_args().field:
+            self.dfield = parser.parse_args().field
+            self.ic_dfield = -1
 
     def readDipoleProfile(self, filename=None):
         """
@@ -63,6 +67,8 @@ class DipoleOrientation(object):
         self.cosTheta = []
         self.P2 = []
 
+        if self.dfield != 0:
+            dsign = np.sign( float( self.dfield ) )
         max_ic = max( self.ic_t, self.ic_dfield, self.ic_dmag )
         i_line = 0
         previous_dip_sign = 1.0
@@ -75,7 +81,10 @@ class DipoleOrientation(object):
             if len(data) <= max_ic:
                 raise IOError('Not enough collumns in %s based on input information.' % filename)
 
-            if np.sign( previous_dip_sign * float( data[self.ic_dmag] ) ) == np.sign( float( data[self.ic_dfield] ) ):
+            if self.dfield < 0:
+                dsign = np.sign( float( data[self.ic_dfield] ) )
+
+            if np.sign( previous_dip_sign * float( data[self.ic_dmag] ) ) == dsign:
                 self.tflip.append( float( data[self.ic_t] ) * self.t_conversion )
                 previous_dip_sign *= -1.0
 
@@ -111,8 +120,10 @@ def main(argv=None):
                    help='Collumn with the simulation time')
     parser.add_argument("--t_conversion", type=float, default=1.0,
                    help='convert the times by this conversion')
+    parser.add_argument("--field", type=float, 
+                   help='Applied field value')
     parser.add_argument("--field_collumn", type=int, 
-                   help='Collumn with the total dipole magnitude')
+                   help='Collumn with the applied field')
     parser.add_argument("--dipole_collumn", type=int, 
                    help='Collumn with the dipole magnitude in the applied field direction')
 

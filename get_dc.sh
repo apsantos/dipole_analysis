@@ -1,21 +1,27 @@
 #!/bin/bash
 
+module load anaconda
 # INPUT FOR JOB
-header='dnp155rl24_'
+header=$1
 end='BHM'
 
-Bscale=0.001
-nB=10
+nB=$2
+NAVG=$3
 half_nB=`python -c "print int(0.5*${nB})"`
 onefive_nB=`python -c "print int(1.5*${nB})"`
 ntot=`python -c "print int(2.5*${nB})"`
-#echo "# TimeStep v_B v_H v_M v_Chi" > ${header}allB.BHM
-echo 0 0 0 0 0 >> ${header}allB.BHM
-files=(${header}AB*.${end})
-for f in ${header}AB*.${end} ${header}BB*.${end} ${header}CB*.${end}; do
-   tail -n 1 $f >> ${header}allB.BHM
+echo 0 0 0 0 0 0 0 > ${header}allH.BHM
+for f in ${header}AH*.${end} ${header}BH*.${end} ${header}CH*.${end}; do
+   t=`tail -n 1 $f | awk '{print $1}'`
+   H=`tail -n 1 $f | awk '{print $2}'`
+   B=`tail -n 1 $f | awk '{print $3}'`
+   tail -n $NAVG $f > tmp.BHM
+   M=`dataFunctions.py -i tmp.BHM -a -d -l 0 -c 3`
+   echo $t $H $B $M >> ${header}allH.BHM
 done
-python sort.py -f ${header}allB.BHM -l 1 -o ${header}loop.BHM
+head -n1 $f > ${header}loop.BHM
+sort_dc.py -f ${header}allH.BHM -l 1 -o tmp.BHM
+cat tmp.BHM >> ${header}loop.BHM
 
 #for (( c=1; c<=$ntot; c++ ))
 #do
